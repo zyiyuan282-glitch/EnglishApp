@@ -1,8 +1,16 @@
-
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Difficulty, WordPair, Card, GameStatus } from './types';
 import { fetchWordPairs } from './services/geminiService';
 import GameCard from './components/GameCard';
+
+const shuffle = <T,>(arr: T[]) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
 
 const App: React.FC = () => {
   const [status, setStatus] = useState<GameStatus>('idle');
@@ -12,11 +20,28 @@ const App: React.FC = () => {
   const [selectedCards, setSelectedCards] = useState<Card[]>([]);
   const [timer, setTimer] = useState(0);
   const [score, setScore] = useState(0);
+  const [isBusy, setIsBusy] = useState(false);
   const timerRef = useRef<number | null>(null);
+
+  const stopTimer = () => {
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
 
   const initializeGame = async (selectedDifficulty: Difficulty) => {
     setStatus('loading');
+    setIsBusy(false);
     setDifficulty(selectedDifficulty);
+
+    // reset ui states early
+    setTimer(0);
+    setScore(0);
+    setSelectedCards([]);
+
+    stopTimer();
+
     const wordPairs = await fetchWordPairs(selectedDifficulty, 8);
     setWords(wordPairs);
 
@@ -38,28 +63,26 @@ const App: React.FC = () => {
       });
     });
 
-    // Shuffle
-    const shuffled = initialCards.sort(() => Math.random() - 0.5);
-    setCards(shuffled);
-    setTimer(0);
-    setScore(0);
-    setSelectedCards([]);
+    setCards(shuffle(initialCards));
+
     setStatus('playing');
 
-    if (timerRef.current) window.clearInterval(timerRef.current);
     timerRef.current = window.setInterval(() => {
       setTimer((prev) => prev + 1);
     }, 1000);
   };
 
   const handleCardSelect = (card: Card) => {
+    if (status !== 'playing') return;
+    if (isBusy) return;
     if (selectedCards.some((s) => s.id === card.id) || card.isMatched) return;
 
     const newSelected = [...selectedCards, card];
-    
-    // Only allow one of each type or two cards max
+
     if (newSelected.length === 2) {
+      setIsBusy(true);
       const [first, second] = newSelected;
+
       if (first.pairId === second.pairId && first.type !== second.type) {
         // Match!
         setTimeout(() => {
@@ -70,12 +93,14 @@ const App: React.FC = () => {
           );
           setScore((prev) => prev + 10);
           setSelectedCards([]);
+          setIsBusy(false);
         }, 300);
       } else {
         // No match
         setSelectedCards(newSelected);
         setTimeout(() => {
           setSelectedCards([]);
+          setIsBusy(false);
         }, 800);
       }
     } else {
@@ -86,9 +111,17 @@ const App: React.FC = () => {
   useEffect(() => {
     if (cards.length > 0 && cards.every((c) => c.isMatched)) {
       setStatus('finished');
-      if (timerRef.current) window.clearInterval(timerRef.current);
+      setIsBusy(false);
+      stopTimer();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cards]);
+
+  // On unmount: avoid orphaned interval
+  useEffect(() => {
+    return () => stopTimer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -110,7 +143,9 @@ const App: React.FC = () => {
       <main className="max-w-4xl w-full flex-grow flex flex-col items-center">
         {status === 'idle' && (
           <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md animate-bounce-in">
-            <h2 className="text-2xl font-semibold text-slate-800 mb-6 text-center">选择游戏难度</h2>
+            <h2 className="text-2xl font-semibold text-slate-800 mb-6 text-center">
+              选择游戏难度
+            </h2>
             <div className="grid grid-cols-1 gap-3">
               {Object.values(Difficulty).map((level) => (
                 <button
@@ -131,7 +166,9 @@ const App: React.FC = () => {
         {status === 'loading' && (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-            <p className="text-indigo-800 font-semibold text-lg">Gemini 正在为你准备单词...</p>
+            <p className="text-indigo-800 font-semibold text-lg">
+              Gemini 正在为你准备单词...
+            </p>
           </div>
         )}
 
@@ -141,16 +178,28 @@ const App: React.FC = () => {
             <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-sm">
               <div className="flex gap-8">
                 <div>
-                  <span className="text-xs uppercase font-bold text-slate-400 block tracking-wider">分数</span>
+                  <span className="text-xs uppercase font-bold text-slate-400 block tracking-wider">
+                    分数
+                  </span>
                   <span className="text-2xl font-bold text-indigo-600">{score}</span>
                 </div>
                 <div>
-                  <span className="text-xs uppercase font-bold text-slate-400 block tracking-wider">用时</span>
-                  <span className="text-2xl font-bold text-slate-700">{formatTime(timer)}</span>
+                  <span className="text-xs uppercase font-bold text-slate-400 block tracking-wider">
+                    用时
+                  </span>
+                  <span className="text-2xl font-bold text-slate-700">
+                    {formatTime(timer)}
+                  </span>
                 </div>
               </div>
-              <button 
-                onClick={() => setStatus('idle')}
+
+              <button
+                onClick={() => {
+                  stopTimer();
+                  setIsBusy(false);
+                  setSelectedCards([]);
+                  setStatus('idle');
+                }}
                 className="text-sm font-semibold text-slate-400 hover:text-red-500 transition-colors"
               >
                 退出游戏
@@ -176,7 +225,12 @@ const App: React.FC = () => {
             <div className="mb-6">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 text-green-600 rounded-full mb-4">
                 <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="3"
+                    d="M5 13l4 4L19 7"
+                  ></path>
                 </svg>
               </div>
               <h2 className="text-3xl font-bold text-slate-800">做得好！</h2>
@@ -185,7 +239,10 @@ const App: React.FC = () => {
 
             <div className="grid grid-cols-1 gap-2 mb-8 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
               {words.map((word) => (
-                <div key={word.id} className="bg-slate-50 p-3 rounded-xl flex items-center justify-between group">
+                <div
+                  key={word.id}
+                  className="bg-slate-50 p-3 rounded-xl flex items-center justify-between group"
+                >
                   <div className="text-left">
                     <span className="font-bold text-indigo-700">{word.en}</span>
                     <span className="text-slate-400 mx-2">|</span>
@@ -198,7 +255,12 @@ const App: React.FC = () => {
 
             <div className="flex gap-4">
               <button
-                onClick={() => setStatus('idle')}
+                onClick={() => {
+                  stopTimer();
+                  setIsBusy(false);
+                  setSelectedCards([]);
+                  setStatus('idle');
+                }}
                 className="flex-1 py-4 bg-slate-100 text-slate-700 font-bold rounded-2xl hover:bg-slate-200 transition-all"
               >
                 更换难度
@@ -222,3 +284,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+
