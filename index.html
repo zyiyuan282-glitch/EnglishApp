@@ -4,186 +4,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>喵喵单词王 - 乐学版</title>
+    <title>喵喵单词王 - 养成系乐学</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/canvas-confetti@1.6.0/dist/confetti.browser.js"></script>
     <style>
-        /* 强制使用更清晰、更正规的字体堆栈 */
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@700&display=swap');
-        body { font-family: 'Noto Sans SC', -apple-system, sans-serif; }
-        .match-anim { animation: matchEffect 0.4s ease-out forwards; }
-        @keyframes matchEffect {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.5; }
-            100% { transform: scale(0); opacity: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@700;900&display=swap');
+        body { font-family: 'Noto Sans SC', sans-serif; background: #f8fafc; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        /* 核心卡片样式：大、重、稳 */
+        .card-item {
+            font-size: 1.5rem;
+            font-weight: 900;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-bottom: 5px solid #e2e8f0;
         }
-        .gradient-bg { background: linear-gradient(180deg, #E0F2FE 0%, #F0FDFA 100%); }
-        /* 增加卡片的对比度和清晰度 */
-        .game-card {
-            font-size: 1.5rem !important; /* 增大字号 */
-            font-weight: 800 !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        .card-selected {
+            transform: translateY(-5px);
+            background-color: #3b82f6 !important;
+            color: white !important;
+            border-bottom-color: #1d4ed8;
+            box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.5);
         }
+        .card-error {
+            animation: shake 0.4s ease-in-out;
+            background-color: #fee2e2 !important;
+            border-bottom-color: #f87171;
+        }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+        
+        /* 消除动画 */
+        .matched-hide { animation: zoomOut 0.4s forwards; pointer-events: none; }
+        @keyframes zoomOut { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
+
+        /* 养成反馈：猫咪浮动 */
+        .pet-float { animation: petFloat 3s ease-in-out infinite; }
+        @keyframes petFloat { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-12px) rotate(5deg); } }
     </style>
 </head>
-<body class="gradient-bg min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col">
 
-    <div id="homeScreen" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-8">
-        <div class="text-9xl mb-6">🐱</div>
-        <h1 class="text-4xl font-black text-blue-600 mb-2">喵喵单词王</h1>
-        <p class="text-slate-400 mb-12">快乐消除，轻松记单词</p>
-        <button onclick="startLevel(0)" class="w-full max-w-xs bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold py-6 rounded-3xl shadow-xl shadow-blue-200 transition-all active:scale-95">
-            开始挑战 🚀
-        </button>
-        <p class="mt-8 text-sm text-slate-300 italic text-center">当前版本：V2.5 智能关卡版</p>
+    <div id="homeUI" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-8">
+        <div class="text-[120px] pet-float mb-4">🐱</div>
+        <h1 class="text-4xl font-black text-slate-800 mb-2">喵喵单词王</h1>
+        <p class="text-blue-500 font-bold tracking-widest mb-12">养成 · 探险 · 记单词</p>
+        <div class="w-full max-w-xs space-y-4">
+            <button onclick="initGame(0)" class="w-full bg-blue-600 text-white text-2xl font-bold py-6 rounded-[2rem] shadow-xl active:scale-95 transition-all">开始探险</button>
+            <div class="text-center text-slate-300 text-sm">当前进度：森林地图 5%</div>
+        </div>
     </div>
 
-    <header class="p-4 flex justify-between items-center bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10">
+    <header class="p-4 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-slate-100">
         <div class="flex items-center gap-3">
-            <button onclick="location.reload()" class="text-2xl">🏠</button>
+            <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-xl">🗺️</div>
             <div>
-                <h2 id="levelTitle" class="text-lg font-bold text-slate-700">加载中...</h2>
-                <div class="h-1.5 w-24 bg-slate-100 rounded-full">
-                    <div id="progressBar" class="h-full bg-blue-500 rounded-full transition-all duration-300" style="width: 0%"></div>
-                </div>
+                <div id="levelTag" class="text-xs font-black text-blue-400 uppercase tracking-tighter">Level 1</div>
+                <div id="levelTitle" class="text-base font-bold text-slate-700 leading-none">热带水果</div>
             </div>
         </div>
-        <div class="text-right">
-            <span id="score" class="text-2xl font-black text-blue-500">0</span>
-            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Score</p>
+        <div class="flex flex-col items-end">
+            <span id="score" class="text-2xl font-black text-blue-600 leading-none">0</span>
+            <span class="text-[10px] font-bold text-slate-300 tracking-widest uppercase">Points</span>
         </div>
     </header>
 
-    <main class="flex-grow p-4 max-w-md mx-auto w-full">
-        <div class="grid grid-cols-2 gap-4 mt-2" id="gameGrid">
+    <main class="flex-grow p-4 max-w-lg mx-auto w-full">
+        <div class="w-full h-3 bg-slate-100 rounded-full mb-6 overflow-hidden border border-slate-50">
+            <div id="progressBar" class="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-500" style="width: 0%"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4" id="board">
             <div id="leftCol" class="space-y-4"></div>
             <div id="rightCol" class="space-y-4"></div>
         </div>
     </main>
 
-    <div id="winModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-sm rounded-[3rem] p-10 text-center shadow-2xl border-4 border-white">
-            <div class="text-8xl mb-6">🏆</div>
-            <h2 class="text-3xl font-black text-slate-800 mb-2">太厉害了！</h2>
-            <p id="winMsg" class="text-slate-500 mb-8 text-lg">这一关的单词全掌握啦</p>
-            <button id="nextBtn" class="w-full bg-blue-500 text-white text-xl font-bold py-5 rounded-2xl shadow-lg hover:bg-blue-600 transition-all active:scale-95">
-                挑战下一关
-            </button>
+    <nav class="p-6 bg-white border-t border-slate-100 flex justify-around items-end relative">
+        <div class="text-center">
+            <div class="text-2xl mb-1">🍯</div>
+            <div class="text-[10px] font-black text-slate-400 uppercase">Energy</div>
+        </div>
+
+        <div class="relative -top-10">
+            <div id="petAvatar" class="text-7xl pet-float filter drop-shadow-xl cursor-pointer">🐾</div>
+            <div id="popBubble" class="absolute -top-12 -right-8 bg-blue-600 text-white text-xs px-3 py-1 rounded-full opacity-0 transition-all font-bold">Awesome!</div>
+        </div>
+
+        <div class="text-center">
+            <div id="timerDisplay" class="text-xl font-black text-slate-700">15:00</div>
+            <div class="text-[10px] font-black text-slate-400 uppercase">Rest</div>
+        </div>
+    </nav>
+
+    <div id="winModal" class="hidden fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-6 text-center">
+        <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 shadow-2xl border-4 border-white">
+            <div class="text-7xl mb-4">🏆</div>
+            <h2 class="text-2xl font-black text-slate-800">今日学习战报</h2>
+            <div class="my-6 space-y-3">
+                <div class="bg-blue-50 p-4 rounded-2xl flex justify-between items-center border border-blue-100">
+                    <span class="font-bold text-blue-700 italic font-mono">✅ Mastered</span>
+                    <span id="statOk" class="text-2xl font-black text-blue-600">0</span>
+                </div>
+                <div class="bg-orange-50 p-4 rounded-2xl flex justify-between items-center border border-orange-100">
+                    <span class="font-bold text-orange-700 italic font-mono">⚠️ Review</span>
+                    <span id="statReview" class="text-2xl font-black text-orange-600">0</span>
+                </div>
+            </div>
+            <button id="nextBtn" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl text-xl shadow-lg active:scale-95 transition-all">挑战下一关</button>
         </div>
     </div>
 
     <script>
-        // 多关卡库数据
-        const LEVEL_DATA = [
-            {
-                name: "第一关：热带水果",
-                words: [
-                    { id: 1, en: 'Apple', cn: '苹果', icon: '🍎' },
-                    { id: 2, en: 'Banana', cn: '香蕉', icon: '🍌' },
-                    { id: 3, en: 'Grape', cn: '葡萄', icon: '🍇' },
-                    { id: 4, en: 'Peach', cn: '桃子', icon: '🍑' }
-                ]
-            },
-            {
-                name: "第二关：森林动物",
-                words: [
-                    { id: 5, en: 'Lion', cn: '狮子', icon: '🦁' },
-                    { id: 6, en: 'Panda', cn: '熊猫', icon: '🐼' },
-                    { id: 7, en: 'Rabbit', cn: '兔子', icon: '🐰' },
-                    { id: 8, en: 'Tiger', cn: '老虎', icon: '🐯' }
-                ]
-            },
-            {
-                name: "第三关：交通工具",
-                words: [
-                    { id: 9, en: 'Plane', cn: '飞机', icon: '✈️' },
-                    { id: 10, en: 'Train', cn: '火车', icon: '🚆' },
-                    { id: 11, en: 'Ship', cn: '轮船', icon: '🚢' },
-                    { id: 12, en: 'Car', cn: '汽车', icon: '🚗' }
-                ]
-            }
+        // --- 🧱 架构层 1：离线库 (Layer 1: Offline Database) ---
+        const LIB = [
+            { title: "水果派对", tag: "Level 1", words: [
+                { id: 1, en: 'Apple', cn: '苹果', icon: '🍎' },
+                { id: 2, en: 'Banana', cn: '香蕉', icon: '🍌' },
+                { id: 3, en: 'Grape', cn: '葡萄', icon: '🍇' },
+                { id: 4, en: 'Peach', cn: '桃子', icon: '🍑' }
+            ]},
+            { title: "森林动物", tag: "Level 2", words: [
+                { id: 5, en: 'Lion', cn: '狮子', icon: '🦁' },
+                { id: 6, en: 'Panda', cn: '熊猫', icon: '🐼' },
+                { id: 7, en: 'Rabbit', cn: '兔子', icon: '🐰' },
+                { id: 8, en: 'Tiger', cn: '老虎', icon: '🐯' }
+            ]}
         ];
 
-        let curIdx = 0;
+        // --- 🧱 架构层 2：状态机 (Layer 2: State Machine) ---
+        let curLv = 0;
         let selL = null, selR = null, matched = 0, score = 0;
+        let errors = new Set();
 
-        function startLevel(idx) {
-            curIdx = idx;
-            matched = 0;
-            selL = null; selR = null;
-            
-            document.getElementById('homeScreen').classList.add('hidden');
+        function initGame(lvIdx) {
+            curLv = lvIdx; matched = 0; selL = null; selR = null; errors.clear();
+            document.getElementById('homeUI').classList.add('hidden');
             document.getElementById('winModal').classList.add('hidden');
-            document.getElementById('levelTitle').innerText = LEVEL_DATA[curIdx].name;
-            document.getElementById('progressBar').style.width = '0%';
-            
+            document.getElementById('levelTag').innerText = LIB[curLv].tag;
+            document.getElementById('levelTitle').innerText = LIB[curLv].title;
+            renderBoard();
+        }
+
+        function renderBoard() {
             const lCol = document.getElementById('leftCol');
             const rCol = document.getElementById('rightCol');
             lCol.innerHTML = ''; rCol.innerHTML = '';
+            
+            const words = LIB[curLv].words;
+            const dataL = [...words].sort(() => Math.random() - 0.5);
+            const dataR = [...words].sort(() => Math.random() - 0.5);
 
-            const currentWords = LEVEL_DATA[curIdx].words;
-            const dataL = [...currentWords].sort(() => Math.random() - 0.5);
-            const dataR = [...currentWords].sort(() => Math.random() - 0.5);
-
-            dataL.forEach(item => lCol.appendChild(createBtn(item.en, 'L', item.id)));
-            dataR.forEach(item => rCol.appendChild(createBtn(item.icon + ' ' + item.cn, 'R', item.id)));
+            dataL.forEach(i => lCol.appendChild(makeBtn(i.en, 'L', i.id)));
+            dataR.forEach(i => rCol.appendChild(makeBtn(i.icon+' '+i.cn, 'R', i.id)));
         }
 
-        function createBtn(text, side, id) {
+        function makeBtn(txt, side, id) {
             const b = document.createElement('button');
-            b.className = "game-card w-full py-7 px-4 bg-white rounded-[2rem] text-slate-700 border-2 border-transparent transition-all active:scale-95";
-            b.innerText = text;
-            b.dataset.id = id;
+            b.className = "card-item w-full py-6 bg-white rounded-3xl text-slate-700 active:scale-95";
+            b.innerText = txt;
             b.onclick = () => {
-                // 选中反馈
                 if (side === 'L') {
-                    if(selL) selL.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600');
+                    if(selL) selL.classList.remove('card-selected');
                     selL = b;
                 } else {
-                    if(selR) selR.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600');
+                    if(selR) selR.classList.remove('card-selected');
                     selR = b;
                 }
-                b.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-600');
+                b.classList.add('card-selected');
 
                 if (selL && selR) {
-                    if (selL.dataset.id === selR.dataset.id) {
-                        score += 100; matched++;
-                        document.getElementById('score').innerText = score;
-                        document.getElementById('progressBar').style.width = (matched / LEVEL_DATA[curIdx].words.length * 100) + '%';
-                        
-                        confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
-                        
-                        const tl = selL, tr = selR;
-                        tl.classList.add('match-anim'); tr.classList.add('match-anim');
-                        setTimeout(() => {
-                            tl.style.visibility = 'hidden'; tr.style.visibility = 'hidden';
-                            if(matched === LEVEL_DATA[curIdx].words.length) showWin();
-                        }, 400);
-                        selL = null; selR = null;
-                    } else {
-                        const tl = selL, tr = selR;
-                        tl.classList.add('bg-red-50', 'border-red-400'); tr.classList.add('bg-red-50', 'border-red-400');
-                        setTimeout(() => {
-                            tl.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600', 'bg-red-50', 'border-red-400');
-                            tr.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600', 'bg-red-50', 'border-red-400');
-                        }, 500);
-                        selL = null; selR = null;
+                    if (selL.dataset.id === id || (side === 'L' ? selR.dataset.id == id : selL.dataset.id == id)) {
+                        // 匹配成功逻辑
+                        if (selL.dataset.id === selR.dataset.id) {
+                            handleMatch(selL, selR);
+                        } else {
+                            handleError(selL, selR);
+                        }
                     }
                 }
             };
+            b.dataset.id = id;
             return b;
         }
 
-        function showWin() {
-            const winBox = document.getElementById('winModal');
-            const nextBtn = document.getElementById('nextBtn');
-            winBox.classList.remove('hidden');
+        function handleMatch(l, r) {
+            score += 100; matched++;
+            document.getElementById('score').innerText = score;
+            document.getElementById('progressBar').style.width = (matched / LIB[curLv].words.length * 100) + '%';
             
-            if (curIdx < LEVEL_DATA.length - 1) {
-                nextBtn.innerText = "进入下一关";
-                nextBtn.onclick = () => startLevel(curIdx + 1);
+            // 爽感反馈
+            confetti({ particleCount: 30, spread: 60, origin: { y: 0.8 }, colors:['#3b82f6','#60a5fa'] });
+            showBubble();
+            updatePet(matched / LIB[curLv].words.length);
+
+            l.classList.add('matched-hide'); r.classList.add('matched-hide');
+            selL = null; selR = null;
+
+            if (matched === LIB[curLv].words.length) setTimeout(showVictory, 600);
+        }
+
+        function handleError(l, r) {
+            errors.add(LIB[curLv].words.find(w => w.id == l.dataset.id).en);
+            l.classList.add('card-error'); r.classList.add('card-error');
+            setTimeout(() => {
+                l.classList.remove('card-selected', 'card-error');
+                r.classList.remove('card-selected', 'card-error');
+                selL = null; selR = null;
+            }, 500);
+        }
+
+        // --- 🧱 架构层 3：反馈与 UI 增强 ---
+        function showBubble() {
+            const b = document.getElementById('popBubble');
+            b.classList.replace('opacity-0', 'opacity-100');
+            setTimeout(() => b.classList.replace('opacity-100', 'opacity-0'), 1000);
+        }
+
+        function updatePet(p) {
+            const avatar = document.getElementById('petAvatar');
+            if (p >= 1) avatar.innerText = '👑';
+            else if (p >= 0.5) avatar.innerText = '🎓';
+            else avatar.innerText = '🐱';
+        }
+
+        function showVictory() {
+            document.getElementById('winModal').classList.remove('hidden');
+            document.getElementById('statOk').innerText = LIB[curLv].words.length - errors.size;
+            document.getElementById('statReview').innerText = errors.size;
+            
+            const nextBtn = document.getElementById('nextBtn');
+            if (curLv < LIB.length - 1) {
+                nextBtn.innerText = "挑战下一关";
+                nextBtn.onclick = () => initGame(curLv + 1);
             } else {
-                nextBtn.innerText = "全部学完！重头再来";
+                nextBtn.innerText = "完成今日任务！";
                 nextBtn.onclick = () => location.reload();
             }
         }
