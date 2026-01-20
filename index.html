@@ -4,128 +4,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>喵喵单词王 V11.0 - 狂飙进化版</title>
+    <title>喵喵单词王 V12.0 - 终极修复版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/canvas-confetti@1.6.0/dist/confetti.browser.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@700;900&display=swap');
         
-        :root { --bg-grad: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
-        body { font-family: 'Noto Sans SC', sans-serif; background: var(--bg-grad); height: 100vh; overflow: hidden; transition: background 1s ease; }
+        body { font-family: 'Noto Sans SC', sans-serif; background: #f0f2f5; height: 100vh; overflow: hidden; }
         
-        .app-container { height: 100vh; display: flex; flex-direction: column; padding: 1.5rem; position: relative; z-index: 1; }
+        .app-container { height: 100vh; display: flex; flex-direction: column; padding: 1.5rem; }
 
-        /* 卡片高级质感 */
+        /* 卡片高级样式：修复了之前的语法错误 */
         .card {
-            flex: 1; margin: 0.6rem; background: rgba(255, 255, 255, 0.9); border-radius: 1.8rem;
-            border: 4px solid white; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            display: flex; flex-direction: column; items-center justify-center; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05); cursor: pointer; position: relative;
-            font-size: 2rem; font-weight: 900; color: #2d3748;
+            flex: 1; margin: 0.6rem; background: rgba(255, 255, 255, 0.95); border-radius: 1.8rem;
+            border: 4px solid white; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            box-shadow: 0 8px 15px rgba(0,0,0,0.08); cursor: pointer; position: relative;
+            font-size: 2rem; font-weight: 900; color: #1e293b;
         }
 
-        /* 选中特效：发光 */
-        .card-active { transform: scale(1.02) translateY(-5px); border-color: #3b82f6; box-shadow: 0 0 25px rgba(59,130,246,0.4); background: white; z-index: 10; }
+        .card-active { transform: scale(1.05) translateY(-5px); border-color: #3b82f6; box-shadow: 0 15px 30px rgba(59,130,246,0.3); z-index: 10; }
 
-        /* 消除特效：爆发缩小 */
-        .card-matched { transform: scale(0) rotate(15deg); opacity: 0; pointer-events: none; }
+        .card-matched { transform: scale(0) rotate(180deg); opacity: 0; pointer-events: none; }
 
-        /* 错误反馈 */
-        .shake { animation: shake 0.4s both; border-color: #ff8787 !important; background: #fff5f5 !important; }
-        @keyframes shake { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-3deg)} 40%{transform:rotate(3deg)} 60%{transform:rotate(-3deg)} 80%{transform:rotate(3deg)} }
+        .shake { animation: shake 0.4s both; border-color: #f87171 !important; background: #fef2f2 !important; }
+        @keyframes shake { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-4deg)} 75%{transform:rotate(4deg)} }
 
-        /* 成绩单动画 */
-        .pop-in { animation: popIn 0.5s cubic-bezier(0.26, 1.36, 0.74, 1) forwards; }
-        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        /* 入场动画 */
+        .card-init { transform: scale(0.5) translateY(100px); opacity: 0; }
         
-        .star-gold { color: #fcc419; text-shadow: 0 0 10px rgba(252,196,25,0.5); }
+        /* 报告单装饰 */
+        .star-item { transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     </style>
 </head>
 <body>
 
     <div id="homeUI" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-8 text-center">
-        <div class="text-[120px] mb-6 drop-shadow-xl">🐱</div>
-        <h1 class="text-7xl font-black text-slate-800 mb-6 tracking-tight">喵喵单词王 <span class="text-blue-600 text-3xl">V11</span></h1>
-        <button id="startBtn" class="bg-blue-600 text-white px-24 py-8 rounded-[3rem] text-4xl font-black shadow-2xl active:scale-90 transition-all hover:bg-blue-700">
-            GO! 🚀
+        <div class="text-[120px] mb-6 animate-bounce">🏆</div>
+        <h1 class="text-6xl font-black text-slate-800 mb-4 tracking-tight">喵喵单词王 <span class="text-blue-500">V12</span></h1>
+        <p class="text-slate-400 text-xl font-bold mb-12">修复错误，极速进化</p>
+        <button id="startBtn" class="bg-blue-600 text-white px-20 py-8 rounded-[2.5rem] text-4xl font-black shadow-2xl active:scale-95 transition-all">
+            开始闯关
         </button>
     </div>
 
     <div class="app-container">
         <header class="flex justify-between items-center mb-6">
-            <button onclick="location.reload()" class="w-16 h-16 bg-white/80 backdrop-blur rounded-2xl shadow-sm flex items-center justify-center text-3xl">🏠</button>
-            <div class="bg-white/80 backdrop-blur px-8 py-3 rounded-2xl shadow-sm">
-                <span id="lvName" class="text-2xl font-black text-slate-700 tracking-widest">---</span>
-            </div>
-            <div class="text-4xl font-black text-blue-600 bg-white/80 px-6 py-3 rounded-2xl shadow-sm" id="score">0</div>
+            <button onclick="location.reload()" class="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center text-2xl">🏠</button>
+            <div id="lvName" class="bg-white/90 px-8 py-3 rounded-2xl shadow-sm text-2xl font-black text-slate-700">加载中</div>
+            <div class="text-3xl font-black text-blue-600 bg-white px-6 py-3 rounded-2xl shadow-sm" id="score">0</div>
         </header>
 
-        <div class="w-full h-4 bg-white/30 rounded-full mb-8 overflow-hidden backdrop-blur">
-            <div id="progress" class="h-full bg-gradient-to-r from-blue-400 to-green-400 transition-all duration-500" style="width: 0%"></div>
+        <div class="w-full h-3 bg-white/50 rounded-full mb-8 overflow-hidden">
+            <div id="progress" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
         </div>
 
-        <main class="flex-1 flex gap-6 min-h-0">
+        <main class="flex-1 flex gap-4 min-h-0">
             <div id="leftCol" class="flex-1 flex flex-col"></div>
             <div id="rightCol" class="flex-1 flex flex-col"></div>
         </main>
     </div>
 
     <div id="reportModal" class="hidden fixed inset-0 z-[110] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-xl rounded-[4rem] p-10 shadow-2xl pop-in text-center">
-            <div id="starContainer" class="text-7xl mb-4 flex justify-center gap-2"></div>
-            <h2 class="text-4xl font-black text-slate-800 mb-6">关卡学习报告</h2>
+        <div class="bg-white w-full max-w-lg rounded-[3.5rem] p-10 shadow-2xl text-center">
+            <div id="stars" class="text-7xl mb-6 flex justify-center gap-2"></div>
+            <h2 class="text-4xl font-black text-slate-800 mb-2">本关成绩单</h2>
+            <p id="timeSpend" class="text-slate-400 font-bold mb-8 italic"></p>
             
-            <div id="reportList" class="max-h-[40vh] overflow-y-auto mb-10 space-y-3 px-4 text-left"></div>
+            <div id="reportList" class="max-h-[35vh] overflow-y-auto mb-10 space-y-2 px-2 text-left"></div>
 
-            <button id="nextBtn" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-8 rounded-3xl text-3xl font-black active:scale-95 shadow-xl transition-all">
-                开启下一关 🐾
+            <button id="nextBtn" class="w-full bg-blue-600 text-white py-7 rounded-3xl text-3xl font-black active:scale-95 shadow-xl">
+                下一关 🐾
             </button>
         </div>
     </div>
 
     <script>
-        let audioCtx, curLv=0, score=0, matched=0, selL=null, selR=null, errorCount=0;
-        let attemptData = [];
+        let audioCtx, curLv=0, score=0, matched=0, selL=null, selR=null, errorCount=0, startTime;
+        let attemptLog = {};
 
         const LIB = [
-            { name: "🍎 水果天地", bg: "linear-gradient(135deg, #fff5f5 0%, #ffe3e3 100%)", words: [{id:1,en:'Apple',cn:'苹果',icon:'🍎'},{id:2,en:'Banana',cn:'香蕉',icon:'🍌'},{id:3,en:'Grape',cn:'葡萄',icon:'🍇'},{id:4,en:'Peach',cn:'桃子',icon:'🍑'}] },
-            { name: "🦁 动物王国", bg: "linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%)", words: [{id:5,en:'Lion',cn:'狮子',icon:'🦁'},{id:6,en:'Panda',cn:'熊猫',icon:'🐼'},{id:7,en:'Rabbit',cn:'兔子',icon:'🐰'},{id:8,en:'Tiger',cn:'老虎',icon:'🐯'}] },
-            { name: "🍞 美味早餐", bg: "linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%)", words: [{id:9,en:'Bread',cn:'面包',icon:'🍞'},{id:10,en:'Milk',cn:'牛奶',icon:'🥛'},{id:11,en:'Egg',cn:'鸡蛋',icon:'🥚'},{id:12,en:'Cake',cn:'蛋糕',icon:'🍰'}] }
+            { name: "🍎 水果篇", words: [{id:1,en:'Apple',cn:'苹果',icon:'🍎'},{id:2,en:'Banana',cn:'香蕉',icon:'🍌'},{id:3,en:'Grape',cn:'葡萄',icon:'🍇'},{id:4,en:'Peach',cn:'桃子',icon:'🍑'}] },
+            { name: "🦁 动物篇", words: [{id:5,en:'Lion',cn:'狮子',icon:'🦁'},{id:6,en:'Panda',cn:'熊猫',icon:'🐼'},{id:7,en:'Rabbit',cn:'兔子',icon:'🐰'},{id:8,en:'Tiger',cn:'老虎',icon:'🐯'}] },
+            { name: "🥛 早餐篇", words: [{id:9,en:'Bread',cn:'面包',icon:'🍞'},{id:10,en:'Milk',cn:'牛奶',icon:'🥛'},{id:11,en:'Egg',cn:'鸡蛋',icon:'🥚'},{id:12,en:'Cake',cn:'蛋糕',icon:'🍰'}] }
         ];
 
-        // 高级合成器音效
-        function playSfx(isCorrect) {
+        function playSfx(correct) {
             if(!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            
-            const now = audioCtx.currentTime;
-            if(isCorrect) {
-                // 上行华丽消除音
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(440, now);
-                osc.frequency.exponentialRampToValueAtTime(880, now + 0.1);
-                osc.frequency.exponentialRampToValueAtTime(1760, now + 0.3);
-                gain.gain.setValueAtTime(0, now);
-                gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-                osc.start(now); osc.stop(now + 0.4);
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.connect(g); g.connect(audioCtx.destination);
+            const t = audioCtx.currentTime;
+            if(correct) {
+                o.frequency.setValueAtTime(523.25, t); o.frequency.exponentialRampToValueAtTime(1046.5, t+0.2);
+                g.gain.setValueAtTime(0.1, t); g.gain.linearRampToValueAtTime(0, t+0.3);
             } else {
-                // 沉闷错误音
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(150, now);
-                osc.frequency.linearRampToValueAtTime(50, now + 0.2);
-                gain.gain.setValueAtTime(0.1, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                osc.start(now); osc.stop(now + 0.2);
+                o.type='sawtooth'; o.frequency.setValueAtTime(200, t); o.frequency.linearRampToValueAtTime(100, t+0.2);
+                g.gain.setValueAtTime(0.05, t); g.gain.linearRampToValueAtTime(0, t+0.2);
             }
+            o.start(); o.stop(t+0.3);
         }
 
-        function speak(t) { 
-            const msg = new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(t)}&type=2`);
-            msg.play();
-        }
+        function speak(t) { new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(t)}&type=2`).play(); }
 
         document.getElementById('startBtn').onclick = () => {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -133,13 +112,15 @@
         };
 
         function initLevel(idx) {
-            curLv = idx; matched = 0; selL = null; selR = null; errorCount = 0; attemptData = [];
-            document.body.style.background = LIB[curLv].bg;
+            curLv=idx; matched=0; selL=null; selR=null; errorCount=0; startTime = Date.now();
+            attemptLog = {};
+            LIB[curLv].words.forEach(w => attemptLog[w.id] = { ...w, ok: true });
+            
             document.getElementById('homeUI').classList.add('hidden');
             document.getElementById('reportModal').classList.add('hidden');
             document.getElementById('lvName').innerText = LIB[curLv].name;
             updateUI();
-            renderCards();
+            render();
         }
 
         function updateUI() {
@@ -147,83 +128,78 @@
             document.getElementById('progress').style.width = (matched / LIB[curLv].words.length * 100) + '%';
         }
 
-        function renderCards() {
-            const lCol = document.getElementById('leftCol'), rCol = document.getElementById('rightCol');
-            lCol.innerHTML = ''; rCol.innerHTML = '';
-            const words = LIB[curLv].words;
-            [...words].sort(()=>Math.random()-0.5).forEach(w => lCol.appendChild(createCard(w.en, 'L', w.id, w.en)));
-            [...words].sort(()=>Math.random()-0.5).forEach(w => rCol.appendChild(createCard(w.icon + ' ' + w.cn, 'R', w.id, w.en)));
+        function render() {
+            const l = document.getElementById('leftCol'), r = document.getElementById('rightCol');
+            l.innerHTML = ''; r.innerHTML = '';
+            const w = LIB[curLv].words;
+            [...w].sort(()=>Math.random()-0.5).forEach((item, i) => l.appendChild(createCard(item.en, 'L', item.id, item.en, i)));
+            [...w].sort(()=>Math.random()-0.5).forEach((item, i) => r.appendChild(createCard(item.icon + ' ' + item.cn, 'R', item.id, item.en, i)));
         }
 
-        function createCard(txt, side, id, eng) {
-            const card = document.createElement('div');
-            card.className = "card";
-            card.innerText = txt;
-            card.onclick = (e) => {
-                if(card.classList.contains('card-matched')) return;
+        function createCard(txt, side, id, eng, delay) {
+            const c = document.createElement('div');
+            c.className = "card card-init";
+            c.innerText = txt;
+            setTimeout(() => c.classList.remove('card-init'), delay * 100);
+            
+            c.onclick = (e) => {
+                if(c.classList.contains('card-matched')) return;
                 speak(eng);
-                
-                if(side === 'L') { if(selL) selL.classList.remove('card-active'); selL = card; }
-                else { if(selR) selR.classList.remove('card-active'); selR = card; }
-                card.classList.add('card-active');
+                if(side==='L'){ if(selL) selL.classList.remove('card-active'); selL=c; }
+                else { if(selR) selR.classList.remove('card-active'); selR=c; }
+                c.classList.add('card-active');
 
                 if(selL && selR) {
-                    const isMatch = selL.dataset.id === selR.dataset.id;
-                    const idL = selL.dataset.id;
-                    
-                    if(isMatch) {
-                        score += 150; matched++;
-                        playSfx(true);
-                        // 爆发粒子特效
-                        confetti({ particleCount: 50, spread: 80, origin: { x: e.clientX/window.innerWidth, y: e.clientY/window.innerHeight } });
-                        const a = selL, b = selR;
-                        setTimeout(() => { a.classList.add('card-matched'); b.classList.add('card-matched'); }, 100);
-                        attemptData.push({ id, status: '✅' });
-                        selL = null; selR = null;
-                        if(matched === LIB[curLv].words.length) setTimeout(showFinalReport, 800);
+                    if(selL.dataset.id === selR.dataset.id) {
+                        score += 100; matched++; playSfx(true);
+                        confetti({ particleCount: 40, spread: 70, origin: { x: e.clientX/window.innerWidth, y: e.clientY/window.innerHeight } });
+                        const a=selL, b=selR;
+                        setTimeout(() => { a.classList.add('card-matched'); b.classList.add('card-matched'); }, 150);
+                        selL=null; selR=null;
+                        if(matched === LIB[curLv].words.length) setTimeout(showReport, 800);
                     } else {
-                        errorCount++;
+                        errorCount++; attemptLog[selL.dataset.id].ok = false;
                         playSfx(false);
-                        const a = selL, b = selR;
+                        const a=selL, b=selR;
                         a.classList.add('shake'); b.classList.add('shake');
-                        setTimeout(() => {
-                            a.classList.remove('card-active', 'shake');
-                            b.classList.remove('card-active', 'shake');
-                        }, 400);
-                        selL = null; selR = null;
+                        setTimeout(() => { a.classList.remove('card-active','shake'); b.classList.remove('card-active','shake'); }, 400);
+                        selL=null; selR=null;
                     }
                     updateUI();
                 }
             };
-            card.dataset.id = id;
-            return card;
+            c.dataset.id = id;
+            return c;
         }
 
-        function showFinalReport() {
+        function showReport() {
             const modal = document.getElementById('reportModal');
             const list = document.getElementById('reportList');
-            const starBox = document.getElementById('starContainer');
-            list.innerHTML = '';
-            starBox.innerHTML = '';
+            const starBox = document.getElementById('stars');
+            list.innerHTML = ''; starBox.innerHTML = '';
             
-            // 星星逻辑
-            let stars = 3;
-            if(errorCount > 1) stars = 2;
-            if(errorCount > 3) stars = 1;
-            for(let i=0; i<3; i++) starBox.innerHTML += `<span class="${i<stars?'star-gold':'opacity-20'}">⭐</span>`;
+            const dur = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('timeSpend').innerText = `耗时: ${dur}秒`;
 
-            // 报告列表内容从本关LIB中提取
-            LIB[curLv].words.forEach(w => {
+            let starCount = errorCount === 0 ? 3 : (errorCount < 3 ? 2 : 1);
+            for(let i=0; i<3; i++) {
+                const s = document.createElement('span');
+                s.innerText = '⭐';
+                s.className = `star-item ${i < starCount ? 'opacity-100 scale-110' : 'opacity-20'}`;
+                starBox.appendChild(s);
+            }
+
+            Object.values(attemptLog).forEach(w => {
                 const item = document.createElement('div');
-                item.className = "flex justify-between items-center bg-slate-50 p-4 rounded-2xl border-l-8 border-blue-400";
-                item.innerHTML = `<div><p class="font-black text-slate-700 text-xl">${w.en}</p><p class="text-slate-400 font-bold">${w.cn}</p></div><div class="text-2xl">✅</div>`;
+                item.className = `flex justify-between p-4 rounded-2xl ${w.ok ? 'bg-green-50' : 'bg-red-50 border-2 border-red-200'}`;
+                item.innerHTML = `<div><p class="font-black">${w.en}</p><p class="text-xs opacity-60">${w.cn}</p></div><span>${w.ok?'✅':'❌'}</span>`;
                 list.appendChild(item);
             });
 
             modal.classList.remove('hidden');
             document.getElementById('nextBtn').onclick = () => {
-                if(curLv < LIB.length - 1) initLevel(curLv + 1);
-                else { alert("🎉 全能单词王诞生！"); location.reload(); }
+                if(curLv < LIB.length - 1) initLevel(curLv+1);
+                else { alert("恭喜通关！"); location.reload(); }
             };
         }
     </script>
