@@ -4,127 +4,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>喵喵单词王 - 高清有声版</title>
+    <title>喵喵单词王 V5.0 - 趣味全能版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/canvas-confetti@1.6.0/dist/confetti.browser.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@900&display=swap');
-        body { font-family: 'Noto Sans SC', sans-serif; background: #f0f9ff; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Noto Sans SC', sans-serif; background: #fdf6e3; user-select: none; -webkit-tap-highlight-color: transparent; }
         
-        /* 卡片设计 */
         .card-item {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 900;
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border-bottom: 8px solid #cbd5e1;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 140px;
+            min-height: 120px;
             background: white;
-            border-radius: 2.5rem;
+            border-radius: 2.2rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
         .card-selected {
-            transform: translateY(-10px);
+            transform: translateY(-8px);
             background-color: #3b82f6 !important;
             color: white !important;
             border-bottom-color: #1d4ed8;
-            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.4);
         }
 
         .matched-hide { animation: matchOut 0.5s forwards; pointer-events: none; }
         @keyframes matchOut { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
         
-        /* 漂浮动画 */
         .floating { animation: float 3s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        /* 星星动画 */
+        .star-pop { animation: starPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes starPop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
     <div id="homeUI" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-8 text-center">
-        <div class="relative w-64 h-64 mb-10">
-            <div class="absolute inset-0 bg-blue-100 rounded-full scale-110"></div>
-            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Felix" class="hidden"> <div class="text-[120px] floating">🎓🐱</div> 
-        </div>
+        <div class="text-[120px] mb-8 floating">👨‍🎓🐱</div>
         <h1 class="text-6xl font-black text-slate-800 mb-4">喵喵单词王</h1>
-        <p class="text-blue-500 font-bold mb-16 text-2xl px-4">华为平板已适配：点击开始听发音</p>
+        <p class="text-blue-500 font-bold mb-16 text-2xl">挑战五大关卡，赢取金金星！</p>
         <button id="startBtn" class="w-full max-w-lg bg-orange-500 text-white text-4xl font-black py-10 rounded-[4rem] shadow-2xl active:scale-95 transition-all">
-            点我开始 🚀
+            开始挑战 🚀
         </button>
     </div>
 
-    <header class="p-8 flex justify-between items-center bg-white shadow-sm sticky top-0 z-10">
-        <button onclick="location.reload()" class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-5xl">🏠</button>
-        <div id="levelTitle" class="text-4xl font-black text-slate-700">第一关</div>
-        <div class="bg-blue-50 px-10 py-4 rounded-full border-4 border-white shadow-sm">
-            <span id="score" class="text-5xl font-black text-blue-600">0</span>
+    <header class="p-6 flex justify-between items-center bg-white/80 backdrop-blur sticky top-0 z-10">
+        <div class="flex items-center gap-4">
+            <button onclick="location.reload()" class="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center text-3xl">🏠</button>
+            <div id="levelTitle" class="text-3xl font-black text-slate-700">正在进入...</div>
+        </div>
+        <div class="flex flex-col items-end">
+            <span id="score" class="text-4xl font-black text-orange-500">0</span>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Score</span>
         </div>
     </header>
 
-    <main class="flex-grow p-8 max-w-7xl mx-auto w-full">
-        <div class="w-full h-8 bg-slate-200 rounded-full mb-16 overflow-hidden shadow-inner">
+    <main class="flex-grow p-6 max-w-6xl mx-auto w-full">
+        <div class="w-full h-6 bg-slate-200 rounded-full mb-10 overflow-hidden shadow-inner">
             <div id="progressBar" class="h-full bg-blue-500 rounded-full transition-all duration-500" style="width: 0%"></div>
         </div>
-        
-        <div class="grid grid-cols-2 gap-10" id="board">
-            <div id="leftCol" class="space-y-10"></div>
-            <div id="rightCol" class="space-y-10"></div>
+        <div class="grid grid-cols-2 gap-8" id="board">
+            <div id="leftCol" class="space-y-6"></div>
+            <div id="rightCol" class="space-y-6"></div>
         </div>
     </main>
 
+    <div id="winModal" class="hidden fixed inset-0 z-[110] bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-6 text-center">
+        <div class="bg-white w-full max-w-xl rounded-[4rem] p-12 shadow-2xl">
+            <div id="starContainer" class="text-7xl mb-6 flex justify-center gap-2"></div>
+            <h2 class="text-4xl font-black text-slate-800 mb-2">太棒了！</h2>
+            <p id="winMsg" class="text-slate-500 text-xl mb-12 italic"></p>
+            <button id="nextBtn" class="w-full bg-blue-600 text-white font-black py-8 rounded-3xl text-3xl shadow-lg active:scale-95">挑战下一关 🐾</button>
+        </div>
+    </div>
+
     <script>
-        let audioCtx = null;
+        let audioCtx = null, curLv = 0, score = 0, matched = 0, selL = null, selR = null, errors = 0;
 
-        // 核心：点击按钮后激活音频环境
-        function initAudio() {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }
+        const LIB = [
+            { title: "🍎 水果派对", words: [{ id:1, en:'Apple', cn:'苹果', icon:'🍎'}, { id:2, en:'Banana', cn:'香蕉', icon:'🍌'}, { id:3, en:'Grape', cn:'葡萄', icon:'🍇'}, { id:4, en:'Peach', cn:'桃子', icon:'🍑'}] },
+            { title: "🦁 动物乐园", words: [{ id:5, en:'Lion', cn:'狮子', icon:'🦁'}, { id:6, en:'Panda', cn:'熊猫', icon:'🐼'}, { id:7, en:'Rabbit', cn:'兔子', icon:'🐰'}, { id:8, en:'Tiger', cn:'老虎', icon:'🐯'}] },
+            { title: "🍔 美味食物", words: [{ id:9, en:'Bread', cn:'面包', icon:'🍞'}, { id:10, en:'Milk', cn:'牛奶', icon:'🥛'}, { id:11, en:'Egg', cn:'鸡蛋', icon:'🥚'}, { id:12, en:'Cake', cn:'蛋糕', icon:'🍰'}] },
+            { title: "🌈 缤纷颜色", words: [{ id:13, en:'Red', cn:'红色', icon:'🔴'}, { id:14, en:'Blue', cn:'蓝色', icon:'🔵'}, { id:15, en:'Green', cn:'绿色', icon:'🟢'}, { id:16, en:'Yellow', cn:'黄色', icon:'🟡'}] },
+            { title: "🔢 趣味数字", words: [{ id:17, en:'One', cn:'一', icon:'1️⃣'}, { id:18, en:'Two', cn:'二', icon:'2️⃣'}, { id:19, en:'Three', cn:'三', icon:'3️⃣'}, { id:20, en:'Four', cn:'四', icon:'4️⃣'}] }
+        ];
 
-        // 强力云端发音：绕过平板系统语音包缺失的问题
+        function initAudio() { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+
         function speak(text) {
-            const pureText = text.replace(/[^\x00-\xff]/g, "").trim();
-            // 直接请求有道云端美音 MP3
-            const audio = new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(pureText)}&type=2`);
-            audio.play().catch(e => {
-                console.log("云端加载失败，尝试系统兜底");
-                const msg = new SpeechSynthesisUtterance(pureText);
-                msg.lang = 'en-US';
-                window.speechSynthesis.speak(msg);
-            });
+            const audio = new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=2`);
+            audio.play();
         }
 
-        // 叮的一声
         function playDing() {
             if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
         }
 
-        const LIB = [
-            { title: "🍎 水果排排站", words: [{ id: 1, en: 'Apple', cn: '苹果', icon: '🍎' },{ id: 2, en: 'Banana', cn: '香蕉', icon: '🍌' },{ id: 3, en: 'Grape', cn: '葡萄', icon: '🍇' },{ id: 4, en: 'Peach', cn: '桃子', icon: '🍑' }]},
-            { title: "🦁 动物对对碰", words: [{ id: 5, en: 'Lion', cn: '狮子', icon: '🦁' },{ id: 6, en: 'Panda', cn: '熊猫', icon: '🐼' },{ id: 7, en: 'Rabbit', cn: '兔子', icon: '🐰' },{ id: 8, en: 'Tiger', cn: '老虎', icon: '🐯' }]}
-        ];
-
-        let curLv = 0, selL = null, selR = null, matched = 0, score = 0;
-
-        document.getElementById('startBtn').onclick = () => {
-            initAudio();
-            initGame(0);
-        };
+        document.getElementById('startBtn').onclick = () => { initAudio(); initGame(0); };
 
         function initGame(idx) {
-            curLv = idx; matched = 0;
+            curLv = idx; matched = 0; errors = 0; selL = null; selR = null;
             document.getElementById('homeUI').classList.add('hidden');
+            document.getElementById('winModal').classList.add('hidden');
             document.getElementById('levelTitle').innerText = LIB[curLv].title;
+            document.getElementById('progressBar').style.width = '0%';
             render();
         }
 
@@ -154,17 +150,12 @@
                         document.getElementById('score').innerText = score;
                         document.getElementById('progressBar').style.width = (matched / LIB[curLv].words.length * 100) + '%';
                         playDing();
-                        confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 } });
-                        const l = selL, r = selR;
-                        l.classList.add('matched-hide'); r.classList.add('matched-hide');
+                        confetti({ particleCount: 60, spread: 70, origin: { y: 0.8 } });
+                        selL.classList.add('matched-hide'); selR.classList.add('matched-hide');
                         selL = null; selR = null;
-                        if (matched === LIB[curLv].words.length) {
-                             setTimeout(() => {
-                                if (curLv < LIB.length - 1) initGame(curLv + 1);
-                                else { alert("太棒了！全部通关！🏆"); location.reload(); }
-                             }, 1000);
-                        }
+                        if (matched === LIB[curLv].words.length) setTimeout(showVictory, 800);
                     } else {
+                        errors++;
                         const l = selL, r = selR;
                         setTimeout(() => { l.classList.remove('card-selected'); r.classList.remove('card-selected'); }, 400);
                         selL = null; selR = null;
@@ -173,6 +164,34 @@
             };
             b.dataset.id = id;
             return b;
+        }
+
+        function showVictory() {
+            const winModal = document.getElementById('winModal');
+            const starContainer = document.getElementById('starContainer');
+            const winMsg = document.getElementById('winMsg');
+            winModal.classList.remove('hidden');
+            
+            // 星星评分逻辑
+            let starCount = 3;
+            if (errors > 2) starCount = 2;
+            if (errors > 5) starCount = 1;
+            
+            starContainer.innerHTML = '';
+            for(let i=0; i<3; i++) {
+                const star = document.createElement('span');
+                star.innerText = i < starCount ? '⭐' : '☆';
+                star.className = i < starCount ? 'star-pop' : 'opacity-30';
+                starContainer.appendChild(star);
+            }
+
+            const msgs = ["简直是天才！", "做得很棒，继续加油！", "学会了不少新单词哦！"];
+            winMsg.innerText = msgs[3 - starCount];
+
+            document.getElementById('nextBtn').onclick = () => {
+                if (curLv < LIB.length - 1) initGame(curLv + 1);
+                else { alert("🎉 恭喜通关所有关卡！你是最棒的单词王！"); location.reload(); }
+            };
         }
     </script>
 </body>
