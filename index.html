@@ -4,120 +4,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>喵喵单词王 - 华为平板专用版</title>
+    <title>喵喵单词王 - 高清有声版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/canvas-confetti@1.6.0/dist/confetti.browser.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@900&display=swap');
         body { font-family: 'Noto Sans SC', sans-serif; background: #f0f9ff; user-select: none; -webkit-tap-highlight-color: transparent; }
-        /* 针对大屏平板优化字号 */
-        .card-item { font-size: 2rem; font-weight: 900; transition: all 0.2s; border-bottom: 8px solid #e2e8f0; display: flex; align-items: center; justify-content: center; min-height: 120px; background: white; border-radius: 2.5rem; cursor: pointer; padding: 15px; text-align: center; }
-        .card-selected { transform: translateY(-10px); background-color: #3b82f6 !important; color: white !important; border-bottom-color: #1d4ed8; box-shadow: 0 20px 30px -5px rgba(59, 130, 246, 0.4); }
+        
+        /* 卡片设计 */
+        .card-item {
+            font-size: 2.5rem;
+            font-weight: 900;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-bottom: 8px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 140px;
+            background: white;
+            border-radius: 2.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-selected {
+            transform: translateY(-10px);
+            background-color: #3b82f6 !important;
+            color: white !important;
+            border-bottom-color: #1d4ed8;
+            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.4);
+        }
+
         .matched-hide { animation: matchOut 0.5s forwards; pointer-events: none; }
         @keyframes matchOut { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
+        
+        /* 漂浮动画 */
+        .floating { animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
     <div id="homeUI" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-8 text-center">
-        <div class="text-[180px] mb-8">🐱</div>
+        <div class="relative w-64 h-64 mb-10">
+            <div class="absolute inset-0 bg-blue-100 rounded-full scale-110"></div>
+            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Felix" class="hidden"> <div class="text-[120px] floating">🎓🐱</div> 
+        </div>
         <h1 class="text-6xl font-black text-slate-800 mb-4">喵喵单词王</h1>
-        <p class="text-blue-500 font-bold mb-16 text-2xl">华为平板用户：请点击下方按钮开启音效</p>
-        <button id="mainStartBtn" class="w-full max-w-md bg-blue-600 text-white text-4xl font-black py-10 rounded-[4rem] shadow-2xl active:scale-95 transition-all">
-            开启有声之旅 🚀
+        <p class="text-blue-500 font-bold mb-16 text-2xl px-4">华为平板已适配：点击开始听发音</p>
+        <button id="startBtn" class="w-full max-w-lg bg-orange-500 text-white text-4xl font-black py-10 rounded-[4rem] shadow-2xl active:scale-95 transition-all">
+            点我开始 🚀
         </button>
     </div>
 
     <header class="p-8 flex justify-between items-center bg-white shadow-sm sticky top-0 z-10">
-        <button onclick="location.reload()" class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-4xl">🏠</button>
-        <div id="levelTitle" class="text-3xl font-black text-slate-700">加载中...</div>
-        <div class="bg-blue-50 px-8 py-3 rounded-full"><span id="score" class="text-4xl font-black text-blue-600">0</span></div>
+        <button onclick="location.reload()" class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-5xl">🏠</button>
+        <div id="levelTitle" class="text-4xl font-black text-slate-700">第一关</div>
+        <div class="bg-blue-50 px-10 py-4 rounded-full border-4 border-white shadow-sm">
+            <span id="score" class="text-5xl font-black text-blue-600">0</span>
+        </div>
     </header>
 
-    <main class="flex-grow p-8 max-w-6xl mx-auto w-full">
-        <div class="w-full h-6 bg-slate-200 rounded-full mb-12 overflow-hidden">
-            <div id="progressBar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
+    <main class="flex-grow p-8 max-w-7xl mx-auto w-full">
+        <div class="w-full h-8 bg-slate-200 rounded-full mb-16 overflow-hidden shadow-inner">
+            <div id="progressBar" class="h-full bg-blue-500 rounded-full transition-all duration-500" style="width: 0%"></div>
         </div>
-        <div class="grid grid-cols-2 gap-8" id="board">
-            <div id="leftCol" class="space-y-8"></div>
-            <div id="rightCol" class="space-y-8"></div>
+        
+        <div class="grid grid-cols-2 gap-10" id="board">
+            <div id="leftCol" class="space-y-10"></div>
+            <div id="rightCol" class="space-y-10"></div>
         </div>
     </main>
 
-    <div id="winModal" class="hidden fixed inset-0 z-[110] bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-6 text-center">
-        <div class="bg-white w-full max-w-2xl rounded-[5rem] p-20 shadow-2xl">
-            <div class="text-[120px] mb-8">🏆</div>
-            <h2 class="text-5xl font-black mb-16 text-slate-800">通关成功！</h2>
-            <button id="nextBtn" class="w-full bg-blue-600 text-white font-black py-8 rounded-3xl text-3xl shadow-lg">下一关 🚀</button>
-        </div>
-    </div>
-
     <script>
-        // --- 华为平板强兼容发音引擎 ---
         let audioCtx = null;
-        const synth = window.speechSynthesis;
 
-        // 初始化音频（由用户手动触发）
-        function initAudioEngine() {
-            try {
-                // 1. 尝试初始化 Web Audio
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-                
-                // 2. 预热 Speech Synthesis
-                // 在安卓上，必须先 speak 一个空字符串来抢占音频焦点
-                const warmUp = new SpeechSynthesisUtterance('');
-                synth.speak(warmUp);
-                
-                console.log("音频系统就绪");
-            } catch (e) {
-                console.error("音频初始化失败", e);
-            }
+        // 核心：点击按钮后激活音频环境
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
-        // 播放叮的一声（合成音色，避开华为系统对 MP3 的拦截）
-        function playEffect() {
+        // 强力云端发音：绕过平板系统语音包缺失的问题
+        function speak(text) {
+            const pureText = text.replace(/[^\x00-\xff]/g, "").trim();
+            // 直接请求有道云端美音 MP3
+            const audio = new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(pureText)}&type=2`);
+            audio.play().catch(e => {
+                console.log("云端加载失败，尝试系统兜底");
+                const msg = new SpeechSynthesisUtterance(pureText);
+                msg.lang = 'en-US';
+                window.speechSynthesis.speak(msg);
+            });
+        }
+
+        // 叮的一声
+        function playDing() {
             if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime);
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
-        }
-
-        // 朗读单词
-        function speak(text) {
-            synth.cancel(); // 必须先取消，否则华为系统可能会卡在队列里
-            const msg = new SpeechSynthesisUtterance(text.replace(/[^\x00-\xff]/g, ""));
-            msg.lang = 'en-US';
-            msg.rate = 0.8;
-            msg.volume = 1.0;
-            synth.speak(msg);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.4);
         }
 
         const LIB = [
-            { title: "第一关：水果", words: [{ id: 1, en: 'Apple', cn: '苹果', icon: '🍎' },{ id: 2, en: 'Banana', cn: '香蕉', icon: '🍌' },{ id: 3, en: 'Grape', cn: '葡萄', icon: '🍇' },{ id: 4, en: 'Peach', cn: '桃子', icon: '🍑' }]},
-            { title: "第二关：动物", words: [{ id: 5, en: 'Lion', cn: '狮子', icon: '🦁' },{ id: 6, en: 'Panda', cn: '熊猫', icon: '🐼' },{ id: 7, en: 'Rabbit', cn: '兔子', icon: '🐰' },{ id: 8, en: 'Tiger', cn: '老虎', icon: '🐯' }]}
+            { title: "🍎 水果排排站", words: [{ id: 1, en: 'Apple', cn: '苹果', icon: '🍎' },{ id: 2, en: 'Banana', cn: '香蕉', icon: '🍌' },{ id: 3, en: 'Grape', cn: '葡萄', icon: '🍇' },{ id: 4, en: 'Peach', cn: '桃子', icon: '🍑' }]},
+            { title: "🦁 动物对对碰", words: [{ id: 5, en: 'Lion', cn: '狮子', icon: '🦁' },{ id: 6, en: 'Panda', cn: '熊猫', icon: '🐼' },{ id: 7, en: 'Rabbit', cn: '兔子', icon: '🐰' },{ id: 8, en: 'Tiger', cn: '老虎', icon: '🐯' }]}
         ];
 
         let curLv = 0, selL = null, selR = null, matched = 0, score = 0;
 
-        document.getElementById('mainStartBtn').onclick = () => {
-            initAudioEngine(); // 核心：用户第一次交互
+        document.getElementById('startBtn').onclick = () => {
+            initAudio();
             initGame(0);
         };
 
         function initGame(idx) {
-            curLv = idx; matched = 0; selL = null; selR = null;
+            curLv = idx; matched = 0;
             document.getElementById('homeUI').classList.add('hidden');
-            document.getElementById('winModal').classList.add('hidden');
             document.getElementById('levelTitle').innerText = LIB[curLv].title;
             render();
         }
@@ -134,24 +140,30 @@
 
         function createBtn(txt, side, id, english) {
             const b = document.createElement('button');
-            b.className = "card-item w-full shadow-md";
+            b.className = "card-item w-full";
             b.innerText = txt;
             b.onclick = () => {
-                speak(english); // 朗读
+                speak(english);
                 if (side === 'L') { if(selL) selL.classList.remove('card-selected'); selL = b; }
                 else { if(selR) selR.classList.remove('card-selected'); selR = b; }
                 b.classList.add('card-selected');
+                
                 if (selL && selR) {
                     if (selL.dataset.id === selR.dataset.id) {
                         score += 100; matched++;
                         document.getElementById('score').innerText = score;
                         document.getElementById('progressBar').style.width = (matched / LIB[curLv].words.length * 100) + '%';
-                        playEffect(); // 播放合成音效
-                        confetti({ particleCount: 60, spread: 80, origin: { y: 0.8 } });
+                        playDing();
+                        confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 } });
                         const l = selL, r = selR;
                         l.classList.add('matched-hide'); r.classList.add('matched-hide');
                         selL = null; selR = null;
-                        if (matched === LIB[curLv].words.length) setTimeout(showVictory, 800);
+                        if (matched === LIB[curLv].words.length) {
+                             setTimeout(() => {
+                                if (curLv < LIB.length - 1) initGame(curLv + 1);
+                                else { alert("太棒了！全部通关！🏆"); location.reload(); }
+                             }, 1000);
+                        }
                     } else {
                         const l = selL, r = selR;
                         setTimeout(() => { l.classList.remove('card-selected'); r.classList.remove('card-selected'); }, 400);
@@ -161,14 +173,6 @@
             };
             b.dataset.id = id;
             return b;
-        }
-
-        function showVictory() {
-            document.getElementById('winModal').classList.remove('hidden');
-            document.getElementById('nextBtn').onclick = () => {
-                if (curLv < LIB.length - 1) initGame(curLv + 1);
-                else location.reload();
-            };
         }
     </script>
 </body>
