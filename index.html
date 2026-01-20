@@ -4,91 +4,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>喵喵单词王 - 朗读修复版</title>
+    <title>喵喵单词王 - 华为平板专用版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/canvas-confetti@1.6.0/dist/confetti.browser.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@700;900&display=swap');
-        body { font-family: 'Noto Sans SC', sans-serif; background: #f0f9ff; user-select: none; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
-        .card-item { font-size: 1.5rem; font-weight: 900; transition: all 0.2s; border-bottom: 6px solid #e2e8f0; display: flex; align-items: center; justify-content: center; min-height: 80px; background: white; border-radius: 2rem; }
-        .card-selected { transform: translateY(-6px); background-color: #3b82f6 !important; color: white !important; border-bottom-color: #1d4ed8; box-shadow: 0 12px 20px -5px rgba(59, 130, 246, 0.4); }
+        body { font-family: 'Noto Sans SC', sans-serif; background: #f0f9ff; user-select: none; -webkit-tap-highlight-color: transparent; }
+        /* 针对大屏平板优化字号 */
+        .card-item { font-size: 2rem; font-weight: 900; transition: all 0.2s; border-bottom: 8px solid #e2e8f0; display: flex; align-items: center; justify-content: center; min-height: 120px; background: white; border-radius: 2.5rem; cursor: pointer; padding: 15px; text-align: center; }
+        .card-selected { transform: translateY(-10px); background-color: #3b82f6 !important; color: white !important; border-bottom-color: #1d4ed8; box-shadow: 0 20px 30px -5px rgba(59, 130, 246, 0.4); }
         .matched-hide { animation: matchOut 0.5s forwards; pointer-events: none; }
         @keyframes matchOut { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
-        .pet-float { animation: float 3s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
     <div id="homeUI" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-8 text-center">
-        <div class="text-[140px] pet-float mb-6">🐱</div>
-        <h1 class="text-4xl font-black text-slate-800 mb-2">喵喵单词王</h1>
-        <p class="text-blue-500 font-bold mb-12 text-lg">点击开始，听美音跟读！</p>
-        <button id="startBtn" class="w-full max-w-xs bg-blue-600 text-white text-2xl font-bold py-6 rounded-[2.5rem] shadow-2xl active:scale-95 transition-all">
-            开始学习之旅 🚀
+        <div class="text-[180px] mb-8">🐱</div>
+        <h1 class="text-6xl font-black text-slate-800 mb-4">喵喵单词王</h1>
+        <p class="text-blue-500 font-bold mb-16 text-2xl">华为平板用户：请点击下方按钮开启音效</p>
+        <button id="mainStartBtn" class="w-full max-w-md bg-blue-600 text-white text-4xl font-black py-10 rounded-[4rem] shadow-2xl active:scale-95 transition-all">
+            开启有声之旅 🚀
         </button>
     </div>
 
-    <header class="p-4 flex justify-between items-center bg-white shadow-sm sticky top-0 z-10">
-        <button onclick="location.reload()" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">🏠</button>
-        <div id="levelTitle" class="text-lg font-black text-slate-700">热带水果</div>
-        <div class="bg-blue-50 px-4 py-1 rounded-full"><span id="score" class="text-2xl font-black text-blue-600">0</span></div>
+    <header class="p-8 flex justify-between items-center bg-white shadow-sm sticky top-0 z-10">
+        <button onclick="location.reload()" class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-4xl">🏠</button>
+        <div id="levelTitle" class="text-3xl font-black text-slate-700">加载中...</div>
+        <div class="bg-blue-50 px-8 py-3 rounded-full"><span id="score" class="text-4xl font-black text-blue-600">0</span></div>
     </header>
 
-    <main class="flex-grow p-4 max-w-lg mx-auto w-full">
-        <div class="w-full h-3 bg-slate-200 rounded-full mb-8 overflow-hidden">
+    <main class="flex-grow p-8 max-w-6xl mx-auto w-full">
+        <div class="w-full h-6 bg-slate-200 rounded-full mb-12 overflow-hidden">
             <div id="progressBar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
         </div>
-        <div class="grid grid-cols-2 gap-4" id="board">
-            <div id="leftCol" class="space-y-4"></div>
-            <div id="rightCol" class="space-y-4"></div>
+        <div class="grid grid-cols-2 gap-8" id="board">
+            <div id="leftCol" class="space-y-8"></div>
+            <div id="rightCol" class="space-y-8"></div>
         </div>
     </main>
 
-    <div id="winModal" class="hidden fixed inset-0 z-[110] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-6 text-center">
-        <div class="bg-white w-full max-w-sm rounded-[3.5rem] p-10 shadow-2xl">
-            <div class="text-8xl mb-6">🏆</div>
-            <h2 class="text-3xl font-black mb-10">太棒了！</h2>
-            <button id="nextBtn" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl text-xl">挑战下一关</button>
+    <div id="winModal" class="hidden fixed inset-0 z-[110] bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-6 text-center">
+        <div class="bg-white w-full max-w-2xl rounded-[5rem] p-20 shadow-2xl">
+            <div class="text-[120px] mb-8">🏆</div>
+            <h2 class="text-5xl font-black mb-16 text-slate-800">通关成功！</h2>
+            <button id="nextBtn" class="w-full bg-blue-600 text-white font-black py-8 rounded-3xl text-3xl shadow-lg">下一关 🚀</button>
         </div>
     </div>
 
     <script>
-        // --- 🎤 核心朗读引擎 ---
+        // --- 华为平板强兼容发音引擎 ---
+        let audioCtx = null;
         const synth = window.speechSynthesis;
-        let voice = null;
 
-        // 预热语音系统
-        function initVoice() {
-            const msg = new SpeechSynthesisUtterance('Welcome');
-            msg.volume = 0; // 静音预热
-            synth.speak(msg);
-            // 获取美音
-            const voices = synth.getVoices();
-            voice = voices.find(v => v.lang.includes('en-US')) || voices[0];
+        // 初始化音频（由用户手动触发）
+        function initAudioEngine() {
+            try {
+                // 1. 尝试初始化 Web Audio
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                
+                // 2. 预热 Speech Synthesis
+                // 在安卓上，必须先 speak 一个空字符串来抢占音频焦点
+                const warmUp = new SpeechSynthesisUtterance('');
+                synth.speak(warmUp);
+                
+                console.log("音频系统就绪");
+            } catch (e) {
+                console.error("音频初始化失败", e);
+            }
         }
 
+        // 播放叮的一声（合成音色，避开华为系统对 MP3 的拦截）
+        function playEffect() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // 朗读单词
         function speak(text) {
-            // 取消之前的朗读，防止堆积
-            synth.cancel();
-            const pureText = text.replace(/[^\x00-\xff]/g, "").trim();
-            const msg = new SpeechSynthesisUtterance(pureText);
+            synth.cancel(); // 必须先取消，否则华为系统可能会卡在队列里
+            const msg = new SpeechSynthesisUtterance(text.replace(/[^\x00-\xff]/g, ""));
             msg.lang = 'en-US';
-            msg.rate = 0.8; 
-            if (voice) msg.voice = voice;
+            msg.rate = 0.8;
+            msg.volume = 1.0;
             synth.speak(msg);
         }
 
-        // --- 游戏逻辑 ---
         const LIB = [
-            { title: "第一关：热带水果", words: [{ id: 1, en: 'Apple', cn: '苹果', icon: '🍎' },{ id: 2, en: 'Banana', cn: '香蕉', icon: '🍌' },{ id: 3, en: 'Grape', cn: '葡萄', icon: '🍇' },{ id: 4, en: 'Peach', cn: '桃子', icon: '🍑' }]},
-            { title: "第二关：森林动物", words: [{ id: 5, en: 'Lion', cn: '狮子', icon: '🦁' },{ id: 6, en: 'Panda', cn: '熊猫', icon: '🐼' },{ id: 7, en: 'Rabbit', cn: '兔子', icon: '🐰' },{ id: 8, en: 'Tiger', cn: '老虎', icon: '🐯' }]}
+            { title: "第一关：水果", words: [{ id: 1, en: 'Apple', cn: '苹果', icon: '🍎' },{ id: 2, en: 'Banana', cn: '香蕉', icon: '🍌' },{ id: 3, en: 'Grape', cn: '葡萄', icon: '🍇' },{ id: 4, en: 'Peach', cn: '桃子', icon: '🍑' }]},
+            { title: "第二关：动物", words: [{ id: 5, en: 'Lion', cn: '狮子', icon: '🦁' },{ id: 6, en: 'Panda', cn: '熊猫', icon: '🐼' },{ id: 7, en: 'Rabbit', cn: '兔子', icon: '🐰' },{ id: 8, en: 'Tiger', cn: '老虎', icon: '🐯' }]}
         ];
 
         let curLv = 0, selL = null, selR = null, matched = 0, score = 0;
 
-        document.getElementById('startBtn').onclick = () => {
-            initVoice(); // 点击激活声音
+        document.getElementById('mainStartBtn').onclick = () => {
+            initAudioEngine(); // 核心：用户第一次交互
             initGame(0);
         };
 
@@ -112,7 +134,7 @@
 
         function createBtn(txt, side, id, english) {
             const b = document.createElement('button');
-            b.className = "card-item w-full shadow-sm";
+            b.className = "card-item w-full shadow-md";
             b.innerText = txt;
             b.onclick = () => {
                 speak(english); // 朗读
@@ -124,7 +146,8 @@
                         score += 100; matched++;
                         document.getElementById('score').innerText = score;
                         document.getElementById('progressBar').style.width = (matched / LIB[curLv].words.length * 100) + '%';
-                        confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
+                        playEffect(); // 播放合成音效
+                        confetti({ particleCount: 60, spread: 80, origin: { y: 0.8 } });
                         const l = selL, r = selR;
                         l.classList.add('matched-hide'); r.classList.add('matched-hide');
                         selL = null; selR = null;
