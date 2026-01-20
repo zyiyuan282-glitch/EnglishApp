@@ -3,39 +3,125 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英语单词连连看</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>喵喵单词消消乐</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/canvas-confetti@1.6.0/dist/confetti.browser.js"></script>
     <style>
-        body {
-            font-family: 'Inter', 'Noto Sans SC', sans-serif;
-            background: #f8fafc;
-        }
-        @keyframes bounce-in {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.05); opacity: 1; }
-            70% { transform: scale(0.9); }
-            100% { transform: scale(1); }
-        }
-        .animate-bounce-in {
-            animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
+        body { font-family: 'ZCOOL KuaiLe', cursive; background: linear-gradient(135deg, #e0f2fe 0%, #fce7f3 100%); min-height: 100vh; margin: 0; padding: 16px; }
+        .match-anim { animation: matchEffect 0.5s ease-out forwards; }
+        @keyframes matchEffect { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.7; } 100% { transform: scale(0); opacity: 0; } }
+        .floating { animation: float 2s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.37.0"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body>
-    <div id="root"></div>
-<script type="module" src="/index.tsx"></script>
+
+    <div class="flex justify-between items-center mb-6 bg-white/70 backdrop-blur-md p-4 rounded-[2rem] shadow-lg border-2 border-white">
+        <div class="flex items-center gap-3">
+            <span class="text-4xl">🐱</span>
+            <div>
+                <h1 class="text-lg font-bold text-sky-600">喵喵单词王</h1>
+                <span id="statusLabel" class="text-[10px] text-sky-400 font-bold uppercase">新手入门</span>
+            </div>
+        </div>
+        <div class="bg-sky-100 px-4 py-1 rounded-full"><span class="text-xl font-black text-sky-600" id="score">0</span></div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-32" id="gameGrid">
+        <div id="leftCol" class="space-y-4"></div>
+        <div id="rightCol" class="space-y-4"></div>
+    </div>
+
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/90 backdrop-blur-md p-6 rounded-[2.5rem] shadow-2xl flex items-center justify-around border-2 border-sky-100">
+        <div class="text-center">
+            <div class="text-2xl">💰</div>
+            <div id="coins" class="font-black text-sky-600">0</div>
+        </div>
+        
+        <div class="text-6xl floating" id="catEmoji">🐾</div>
+
+        <div class="text-center">
+            <div class="text-2xl">🌟</div>
+            <div id="progressText" class="font-black text-sky-600">0%</div>
+        </div>
+    </div>
+
+    <div id="winBox" class="hidden fixed inset-0 bg-sky-900/40 backdrop-blur-md z-50 flex items-center justify-center p-6 text-center">
+        <div class="bg-white rounded-[3rem] p-8 w-full max-w-sm shadow-2xl border-4 border-white">
+            <div class="text-7xl mb-4">🏆</div>
+            <h2 class="text-3xl font-bold text-sky-600 mb-2">通关啦！</h2>
+            <p class="text-slate-400 mb-6">你已经变得非常有智慧了！</p>
+            <button onclick="location.reload()" class="w-full bg-sky-500 text-white font-bold py-4 rounded-2xl shadow-lg">挑战下一关</button>
+        </div>
+    </div>
+
+    <script>
+        const WORDS = [
+            { id: 1, en: 'Apple', cn: '苹果', icon: '🍎' },
+            { id: 2, en: 'Banana', cn: '香蕉', icon: '🍌' },
+            { id: 3, en: 'Cat', cn: '小猫', icon: '🐱' },
+            { id: 4, en: 'Dog', cn: '小狗', icon: '🐶' },
+            { id: 5, en: 'Elephant', cn: '大象', icon: '🐘' },
+            { id: 6, en: 'Fish', cn: '小鱼', icon: '🐟' }
+        ];
+
+        let selL = null, selR = null, matched = 0, score = 0;
+
+        function init() {
+            const lCol = document.getElementById('leftCol');
+            const rCol = document.getElementById('rightCol');
+            const dataL = [...WORDS].sort(() => Math.random() - 0.5);
+            const dataR = [...WORDS].sort(() => Math.random() - 0.5);
+            dataL.forEach(i => lCol.appendChild(createBtn(i.en, 'L', i.id)));
+            dataR.forEach(i => rCol.appendChild(createBtn(i.icon+' '+i.cn, 'R', i.id)));
+        }
+
+        function createBtn(txt, side, id) {
+            const b = document.createElement('button');
+            b.className = "w-full p-6 bg-white rounded-[1.5rem] shadow-sm font-bold text-slate-600 border-b-4 border-slate-100 active:scale-95 transition-all";
+            b.innerText = txt;
+            b.dataset.id = id;
+            b.onclick = () => {
+                if (side === 'L') {
+                    if(selL) selL.classList.remove('ring-4','ring-sky-400','bg-sky-50');
+                    selL = b;
+                } else {
+                    if(selR) selR.classList.remove('ring-4','ring-sky-400','bg-sky-50');
+                    selR = b;
+                }
+                b.classList.add('ring-4','ring-sky-400','bg-sky-50');
+                if (selL && selR) {
+                    if (selL.dataset.id === selR.dataset.id) {
+                        score += 100; matched++; updateUI();
+                        selL.classList.add('match-anim'); selR.classList.add('match-anim');
+                        confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
+                        setTimeout(() => { selL.remove(); selR.remove(); selL=null; selR=null; if(matched===WORDS.length) document.getElementById('winBox').classList.remove('hidden'); }, 500);
+                    } else {
+                        const tl=selL, tr=selR; tl.classList.add('bg-red-50'); tr.classList.add('bg-red-50');
+                        setTimeout(() => { tl.classList.remove('ring-4','ring-sky-400','bg-sky-50','bg-red-50'); tr.classList.remove('ring-4','ring-sky-400','bg-sky-50','bg-red-50'); }, 500);
+                        selL=null; selR=null;
+                    }
+                }
+            };
+            return b;
+        }
+
+        function updateUI() {
+            const p = Math.floor((matched / WORDS.length) * 100);
+            document.getElementById('score').innerText = score;
+            document.getElementById('coins').innerText = matched * 10;
+            document.getElementById('progressText').innerText = p + '%';
+            
+            // 核心进化逻辑：用表情包代替图片，绝对不会报错！
+            const cat = document.getElementById('catEmoji');
+            const label = document.getElementById('statusLabel');
+            if (p >= 100) { cat.innerText = '👑'; label.innerText = '单词国王'; }
+            else if (p >= 60) { cat.innerText = '🎓'; label.innerText = '小学霸'; }
+            else if (p >= 30) { cat.innerText = '🐱'; label.innerText = '探索者'; }
+        }
+        window.onload = init;
+    </script>
 </body>
 </html>
