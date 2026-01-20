@@ -4,124 +4,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>喵喵单词消消乐</title>
+    <title>喵喵单词王 - 乐学版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/canvas-confetti@1.6.0/dist/confetti.browser.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
-        body { font-family: 'ZCOOL KuaiLe', cursive; background: linear-gradient(135deg, #e0f2fe 0%, #fce7f3 100%); min-height: 100vh; margin: 0; padding: 16px; }
-        .match-anim { animation: matchEffect 0.5s ease-out forwards; }
-        @keyframes matchEffect { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: 0.7; } 100% { transform: scale(0); opacity: 0; } }
-        .floating { animation: float 2s ease-in-out infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        /* 强制使用更清晰、更正规的字体堆栈 */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@700&display=swap');
+        body { font-family: 'Noto Sans SC', -apple-system, sans-serif; }
+        .match-anim { animation: matchEffect 0.4s ease-out forwards; }
+        @keyframes matchEffect {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.5; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        .gradient-bg { background: linear-gradient(180deg, #E0F2FE 0%, #F0FDFA 100%); }
+        /* 增加卡片的对比度和清晰度 */
+        .game-card {
+            font-size: 1.5rem !important; /* 增大字号 */
+            font-weight: 800 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
     </style>
 </head>
-<body>
+<body class="gradient-bg min-h-screen flex flex-col">
 
-    <div class="flex justify-between items-center mb-6 bg-white/70 backdrop-blur-md p-4 rounded-[2rem] shadow-lg border-2 border-white">
+    <div id="homeScreen" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-8">
+        <div class="text-9xl mb-6">🐱</div>
+        <h1 class="text-4xl font-black text-blue-600 mb-2">喵喵单词王</h1>
+        <p class="text-slate-400 mb-12">快乐消除，轻松记单词</p>
+        <button onclick="startLevel(0)" class="w-full max-w-xs bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold py-6 rounded-3xl shadow-xl shadow-blue-200 transition-all active:scale-95">
+            开始挑战 🚀
+        </button>
+        <p class="mt-8 text-sm text-slate-300 italic text-center">当前版本：V2.5 智能关卡版</p>
+    </div>
+
+    <header class="p-4 flex justify-between items-center bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10">
         <div class="flex items-center gap-3">
-            <span class="text-4xl">🐱</span>
+            <button onclick="location.reload()" class="text-2xl">🏠</button>
             <div>
-                <h1 class="text-lg font-bold text-sky-600">喵喵单词王</h1>
-                <span id="statusLabel" class="text-[10px] text-sky-400 font-bold uppercase">新手入门</span>
+                <h2 id="levelTitle" class="text-lg font-bold text-slate-700">加载中...</h2>
+                <div class="h-1.5 w-24 bg-slate-100 rounded-full">
+                    <div id="progressBar" class="h-full bg-blue-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
             </div>
         </div>
-        <div class="bg-sky-100 px-4 py-1 rounded-full"><span class="text-xl font-black text-sky-600" id="score">0</span></div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4 mb-32" id="gameGrid">
-        <div id="leftCol" class="space-y-4"></div>
-        <div id="rightCol" class="space-y-4"></div>
-    </div>
-
-    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/90 backdrop-blur-md p-6 rounded-[2.5rem] shadow-2xl flex items-center justify-around border-2 border-sky-100">
-        <div class="text-center">
-            <div class="text-2xl">💰</div>
-            <div id="coins" class="font-black text-sky-600">0</div>
+        <div class="text-right">
+            <span id="score" class="text-2xl font-black text-blue-500">0</span>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Score</p>
         </div>
-        
-        <div class="text-6xl floating" id="catEmoji">🐾</div>
+    </header>
 
-        <div class="text-center">
-            <div class="text-2xl">🌟</div>
-            <div id="progressText" class="font-black text-sky-600">0%</div>
+    <main class="flex-grow p-4 max-w-md mx-auto w-full">
+        <div class="grid grid-cols-2 gap-4 mt-2" id="gameGrid">
+            <div id="leftCol" class="space-y-4"></div>
+            <div id="rightCol" class="space-y-4"></div>
         </div>
-    </div>
+    </main>
 
-    <div id="winBox" class="hidden fixed inset-0 bg-sky-900/40 backdrop-blur-md z-50 flex items-center justify-center p-6 text-center">
-        <div class="bg-white rounded-[3rem] p-8 w-full max-w-sm shadow-2xl border-4 border-white">
-            <div class="text-7xl mb-4">🏆</div>
-            <h2 class="text-3xl font-bold text-sky-600 mb-2">通关啦！</h2>
-            <p class="text-slate-400 mb-6">你已经变得非常有智慧了！</p>
-            <button onclick="location.reload()" class="w-full bg-sky-500 text-white font-bold py-4 rounded-2xl shadow-lg">挑战下一关</button>
+    <div id="winModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-sm rounded-[3rem] p-10 text-center shadow-2xl border-4 border-white">
+            <div class="text-8xl mb-6">🏆</div>
+            <h2 class="text-3xl font-black text-slate-800 mb-2">太厉害了！</h2>
+            <p id="winMsg" class="text-slate-500 mb-8 text-lg">这一关的单词全掌握啦</p>
+            <button id="nextBtn" class="w-full bg-blue-500 text-white text-xl font-bold py-5 rounded-2xl shadow-lg hover:bg-blue-600 transition-all active:scale-95">
+                挑战下一关
+            </button>
         </div>
     </div>
 
     <script>
-        const WORDS = [
-            { id: 1, en: 'Apple', cn: '苹果', icon: '🍎' },
-            { id: 2, en: 'Banana', cn: '香蕉', icon: '🍌' },
-            { id: 3, en: 'Cat', cn: '小猫', icon: '🐱' },
-            { id: 4, en: 'Dog', cn: '小狗', icon: '🐶' },
-            { id: 5, en: 'Elephant', cn: '大象', icon: '🐘' },
-            { id: 6, en: 'Fish', cn: '小鱼', icon: '🐟' }
+        // 多关卡库数据
+        const LEVEL_DATA = [
+            {
+                name: "第一关：热带水果",
+                words: [
+                    { id: 1, en: 'Apple', cn: '苹果', icon: '🍎' },
+                    { id: 2, en: 'Banana', cn: '香蕉', icon: '🍌' },
+                    { id: 3, en: 'Grape', cn: '葡萄', icon: '🍇' },
+                    { id: 4, en: 'Peach', cn: '桃子', icon: '🍑' }
+                ]
+            },
+            {
+                name: "第二关：森林动物",
+                words: [
+                    { id: 5, en: 'Lion', cn: '狮子', icon: '🦁' },
+                    { id: 6, en: 'Panda', cn: '熊猫', icon: '🐼' },
+                    { id: 7, en: 'Rabbit', cn: '兔子', icon: '🐰' },
+                    { id: 8, en: 'Tiger', cn: '老虎', icon: '🐯' }
+                ]
+            },
+            {
+                name: "第三关：交通工具",
+                words: [
+                    { id: 9, en: 'Plane', cn: '飞机', icon: '✈️' },
+                    { id: 10, en: 'Train', cn: '火车', icon: '🚆' },
+                    { id: 11, en: 'Ship', cn: '轮船', icon: '🚢' },
+                    { id: 12, en: 'Car', cn: '汽车', icon: '🚗' }
+                ]
+            }
         ];
 
+        let curIdx = 0;
         let selL = null, selR = null, matched = 0, score = 0;
 
-        function init() {
+        function startLevel(idx) {
+            curIdx = idx;
+            matched = 0;
+            selL = null; selR = null;
+            
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('winModal').classList.add('hidden');
+            document.getElementById('levelTitle').innerText = LEVEL_DATA[curIdx].name;
+            document.getElementById('progressBar').style.width = '0%';
+            
             const lCol = document.getElementById('leftCol');
             const rCol = document.getElementById('rightCol');
-            const dataL = [...WORDS].sort(() => Math.random() - 0.5);
-            const dataR = [...WORDS].sort(() => Math.random() - 0.5);
-            dataL.forEach(i => lCol.appendChild(createBtn(i.en, 'L', i.id)));
-            dataR.forEach(i => rCol.appendChild(createBtn(i.icon+' '+i.cn, 'R', i.id)));
+            lCol.innerHTML = ''; rCol.innerHTML = '';
+
+            const currentWords = LEVEL_DATA[curIdx].words;
+            const dataL = [...currentWords].sort(() => Math.random() - 0.5);
+            const dataR = [...currentWords].sort(() => Math.random() - 0.5);
+
+            dataL.forEach(item => lCol.appendChild(createBtn(item.en, 'L', item.id)));
+            dataR.forEach(item => rCol.appendChild(createBtn(item.icon + ' ' + item.cn, 'R', item.id)));
         }
 
-        function createBtn(txt, side, id) {
+        function createBtn(text, side, id) {
             const b = document.createElement('button');
-            b.className = "w-full p-6 bg-white rounded-[1.5rem] shadow-sm font-bold text-slate-600 border-b-4 border-slate-100 active:scale-95 transition-all";
-            b.innerText = txt;
+            b.className = "game-card w-full py-7 px-4 bg-white rounded-[2rem] text-slate-700 border-2 border-transparent transition-all active:scale-95";
+            b.innerText = text;
             b.dataset.id = id;
             b.onclick = () => {
+                // 选中反馈
                 if (side === 'L') {
-                    if(selL) selL.classList.remove('ring-4','ring-sky-400','bg-sky-50');
+                    if(selL) selL.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600');
                     selL = b;
                 } else {
-                    if(selR) selR.classList.remove('ring-4','ring-sky-400','bg-sky-50');
+                    if(selR) selR.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600');
                     selR = b;
                 }
-                b.classList.add('ring-4','ring-sky-400','bg-sky-50');
+                b.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-600');
+
                 if (selL && selR) {
                     if (selL.dataset.id === selR.dataset.id) {
-                        score += 100; matched++; updateUI();
-                        selL.classList.add('match-anim'); selR.classList.add('match-anim');
-                        confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
-                        setTimeout(() => { selL.remove(); selR.remove(); selL=null; selR=null; if(matched===WORDS.length) document.getElementById('winBox').classList.remove('hidden'); }, 500);
+                        score += 100; matched++;
+                        document.getElementById('score').innerText = score;
+                        document.getElementById('progressBar').style.width = (matched / LEVEL_DATA[curIdx].words.length * 100) + '%';
+                        
+                        confetti({ particleCount: 40, spread: 60, origin: { y: 0.8 } });
+                        
+                        const tl = selL, tr = selR;
+                        tl.classList.add('match-anim'); tr.classList.add('match-anim');
+                        setTimeout(() => {
+                            tl.style.visibility = 'hidden'; tr.style.visibility = 'hidden';
+                            if(matched === LEVEL_DATA[curIdx].words.length) showWin();
+                        }, 400);
+                        selL = null; selR = null;
                     } else {
-                        const tl=selL, tr=selR; tl.classList.add('bg-red-50'); tr.classList.add('bg-red-50');
-                        setTimeout(() => { tl.classList.remove('ring-4','ring-sky-400','bg-sky-50','bg-red-50'); tr.classList.remove('ring-4','ring-sky-400','bg-sky-50','bg-red-50'); }, 500);
-                        selL=null; selR=null;
+                        const tl = selL, tr = selR;
+                        tl.classList.add('bg-red-50', 'border-red-400'); tr.classList.add('bg-red-50', 'border-red-400');
+                        setTimeout(() => {
+                            tl.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600', 'bg-red-50', 'border-red-400');
+                            tr.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600', 'bg-red-50', 'border-red-400');
+                        }, 500);
+                        selL = null; selR = null;
                     }
                 }
             };
             return b;
         }
 
-        function updateUI() {
-            const p = Math.floor((matched / WORDS.length) * 100);
-            document.getElementById('score').innerText = score;
-            document.getElementById('coins').innerText = matched * 10;
-            document.getElementById('progressText').innerText = p + '%';
+        function showWin() {
+            const winBox = document.getElementById('winModal');
+            const nextBtn = document.getElementById('nextBtn');
+            winBox.classList.remove('hidden');
             
-            // 核心进化逻辑：用表情包代替图片，绝对不会报错！
-            const cat = document.getElementById('catEmoji');
-            const label = document.getElementById('statusLabel');
-            if (p >= 100) { cat.innerText = '👑'; label.innerText = '单词国王'; }
-            else if (p >= 60) { cat.innerText = '🎓'; label.innerText = '小学霸'; }
-            else if (p >= 30) { cat.innerText = '🐱'; label.innerText = '探索者'; }
+            if (curIdx < LEVEL_DATA.length - 1) {
+                nextBtn.innerText = "进入下一关";
+                nextBtn.onclick = () => startLevel(curIdx + 1);
+            } else {
+                nextBtn.innerText = "全部学完！重头再来";
+                nextBtn.onclick = () => location.reload();
+            }
         }
-        window.onload = init;
     </script>
 </body>
 </html>
